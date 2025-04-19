@@ -75,15 +75,16 @@ export class GuessService {
 
         if (player_guess === adversary_word) throw new Error('Player already guessed the word');
 
-        const letterAlreadyGuessed = player_guess.match(letter);
+        const guesses = this.guessRepository.findPlayerRoundGuesses(player.id, round.id);
+        const letterAlreadyGuessed = guesses.some((guess) => guess.letter === letter);
         if (letterAlreadyGuessed) throw new Error('Player already guessed this letter');
 
         const guess = new Guess(crypto.randomUUID(), new Date(), letter, player.id, round.id);
-        const guesses = this.guessRepository.findPlayerRoundGuesses(player.id, round.id).concat(guess);
+        const player_guesses = guesses.concat(guess);
 
         const new_player_guess = adversary_word
             .split('')
-            .map((word_letter) => (guesses.find((guess) => guess.letter === word_letter) ? word_letter : null))
+            .map((word_letter) => (player_guesses.find((guess) => guess.letter === word_letter) ? word_letter : null))
             .join('');
 
         if (isHost) round.host_guess = new_player_guess;
